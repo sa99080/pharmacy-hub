@@ -109,7 +109,6 @@ export default function PharmacyHub() {
       <header className="flex justify-between items-center bg-white p-4 rounded-lg shadow mb-6">
         <h1 className="text-2xl font-bold text-blue-600">🏥 1번약국</h1>
         <div className="flex items-center gap-4">
-          <button onClick={() => router.push('/board')} className="text-sm text-blue-500 hover:underline">📋 게시판</button>
           <button onClick={() => router.push('/contacts')} className="text-sm text-blue-500 hover:underline">📞 거래처</button>
           {userPosition !== '국장' && (
             <button onClick={() => router.push('/leave')} className="text-sm text-blue-500 hover:underline">📅 연차신청</button>
@@ -127,11 +126,6 @@ export default function PharmacyHub() {
           <button onClick={handleLogout} className="text-sm text-gray-400 underline">로그아웃</button>
         </div>
       </header>
-
-      <section className="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-6 rounded shadow-sm">
-        <h2 className="font-bold text-yellow-800">📢 이번 주 약국 공지</h2>
-        <p className="text-yellow-700 mt-1">타이레놀 500mg 장기 품절입니다. 대체 조제 시 환자분들께 꼭 설명 부탁드립니다!</p>
-      </section>
 
       <section className="bg-white p-6 rounded-lg shadow mb-6">
         <div className="flex justify-between items-center mb-4">
