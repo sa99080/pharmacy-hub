@@ -43,6 +43,7 @@ export default function EmployeesPage() {
   const [newEmail, setNewEmail] = useState('')
   const [newPosition, setNewPosition] = useState('조제보조')
   const [newPassword, setNewPassword] = useState('')
+  const [newHireDate, setNewHireDate] = useState('')
 
   const [editName, setEditName] = useState('')
   const [editPosition, setEditPosition] = useState('')
@@ -121,6 +122,9 @@ export default function EmployeesPage() {
     }
     setActionLoading(true)
     try {
+      // 현재 관리자 세션 저장
+      const { data: { session: adminSession } } = await supabase.auth.getSession()
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: newEmail,
         password: newPassword,
@@ -128,14 +132,23 @@ export default function EmployeesPage() {
       if (authError) throw authError
 
       const authId = authData.user?.id || null
+
+      // 관리자 세션 복원 (signUp이 새 유저로 로그인시켜버리기 때문)
+      if (adminSession) {
+        await supabase.auth.setSession({
+          access_token: adminSession.access_token,
+          refresh_token: adminSession.refresh_token,
+        })
+      }
+
       const { error: dbError } = await supabase
         .from('pharmacy_users')
-        .insert({ name: newName, email: newEmail, position: newPosition, auth_id: authId })
+        .insert({ name: newName, email: newEmail, position: newPosition, auth_id: authId, hire_date: newHireDate || null })
       if (dbError) throw dbError
 
       showMessage('success', `${newName} 직원이 추가되었습니다.`)
       setShowAddModal(false)
-      setNewName(''); setNewEmail(''); setNewPassword(''); setNewPosition('조제보조')
+      setNewName(''); setNewEmail(''); setNewPassword(''); setNewPosition('조제보조'); setNewHireDate('')
       fetchEmployees()
     } catch (err: any) {
       showMessage('error', err.message || '직원 추가 중 오류가 발생했습니다.')
@@ -320,9 +333,14 @@ export default function EmployeesPage() {
                   {POSITIONS.map(p => <option key={p} value={p}>{p}</option>)}
                 </select>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">입사일</label>
+                <input type="date" value={newHireDate} onChange={e => setNewHireDate(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+              </div>
             </div>
             <div className="flex gap-3 mt-6">
-              <button onClick={() => { setShowAddModal(false); setNewName(''); setNewEmail(''); setNewPassword(''); setNewPosition('조제보조') }}
+              <button onClick={() => { setShowAddModal(false); setNewName(''); setNewEmail(''); setNewPassword(''); setNewPosition('조제보조'); setNewHireDate('') }}
                 className="flex-1 border border-gray-300 text-gray-700 text-sm font-medium py-2 rounded-lg hover:bg-gray-50" disabled={actionLoading}>
                 취소
               </button>
