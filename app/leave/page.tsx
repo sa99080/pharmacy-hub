@@ -10,6 +10,8 @@ export default function LeavePage() {
   const [userPosition, setUserPosition] = useState('');
   const [totalLeave, setTotalLeave] = useState(0);
   const [leaveType, setLeaveType] = useState('연차');
+  const [customReason, setCustomReason] = useState('');
+  const [isCustom, setIsCustom] = useState(false);
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
@@ -179,13 +181,28 @@ export default function LeavePage() {
           {isGukjang ? '✈️ 해외체류 일정 등록' : '📅 연차 신청'}
         </h2>
         {!isGukjang && (
-          <div className="flex gap-3 mb-4">
+          <div className="flex flex-wrap gap-3 mb-4 items-center">
             {['연차', '반차'].map(type => (
-              <button key={type} onClick={() => setLeaveType(type)}
-                className={`px-6 py-2 rounded-full font-medium ${leaveType === type ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
+              <button key={type} onClick={() => { setLeaveType(type); setIsCustom(false); }}
+                className={`px-6 py-2 rounded-full font-medium ${leaveType === type && !isCustom ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
                 {type}
               </button>
             ))}
+            <div className="flex items-center gap-2 ml-2 pl-2 border-l border-gray-200">
+              <button onClick={() => { setIsCustom(true); setLeaveType(customReason || ''); }}
+                className={`px-6 py-2 rounded-full font-medium ${isCustom ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                기타사유
+              </button>
+              {isCustom && (
+                <input
+                  type="text"
+                  value={customReason}
+                  onChange={e => { setCustomReason(e.target.value); setLeaveType(e.target.value); }}
+                  placeholder="예비군, 경조사 등"
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-purple-400 w-40"
+                />
+              )}
+            </div>
           </div>
         )}
         <div className="border rounded-lg overflow-hidden">
@@ -279,13 +296,28 @@ export default function LeavePage() {
               <p className="text-xs text-orange-500 mb-3">⚠️ 승인된 연차를 수정하면 다시 승인 대기 상태가 됩니다.</p>
             )}
             {!isGukjang && (
-              <div className="flex gap-2 mb-4">
+              <div className="flex flex-wrap gap-2 mb-4 items-center">
                 {['연차', '반차'].map(type => (
                   <button key={type} onClick={() => setEditType(type)}
-                    className={`px-4 py-1.5 rounded-full text-sm font-medium ${editType === type ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                    className={`px-4 py-1.5 rounded-full text-sm font-medium ${editType === type && !['연차','반차'].every(t => t !== editType) ? 'bg-blue-500 text-white' : editType === type ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
                     {type}
                   </button>
                 ))}
+                <div className="flex items-center gap-2 ml-1 pl-2 border-l border-gray-200">
+                  <button onClick={() => { if (editType === '연차' || editType === '반차') setEditType(''); }}
+                    className={`px-4 py-1.5 rounded-full text-sm font-medium ${editType !== '연차' && editType !== '반차' ? 'bg-purple-500 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                    기타
+                  </button>
+                  {editType !== '연차' && editType !== '반차' && (
+                    <input
+                      type="text"
+                      value={editType}
+                      onChange={e => setEditType(e.target.value)}
+                      placeholder="예비군, 경조사 등"
+                      className="border border-gray-300 rounded-lg px-2 py-1.5 text-xs text-gray-800 focus:outline-none focus:border-purple-400 w-32"
+                    />
+                  )}
+                </div>
               </div>
             )}
             {/* 수정용 달력 */}
