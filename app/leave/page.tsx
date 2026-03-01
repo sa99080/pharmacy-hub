@@ -71,21 +71,28 @@ export default function LeavePage() {
 
   const handleSubmit = async () => {
     if (selectedDates.length === 0) return alert('날짜를 선택해주세요!');
+    if (!leaveType || leaveType.trim() === '') return alert('사유를 입력해주세요!');
     const sorted = [...selectedDates].sort();
     const isGukjang = userPosition === '국장';
 
+    let hasError = false;
     for (const date of sorted) {
-      await supabase.from('pharmacy_schedules').insert({
+      const { error } = await supabase.from('pharmacy_schedules').insert({
         user_id: userId,
-        title: `${userName} ${leaveType}`,
-        type: leaveType,
+        title: `${userName} ${leaveType.trim()}`,
+        type: leaveType.trim(),
         start_date: date,
         end_date: date,
         status: isGukjang ? 'approved' : 'pending'
       });
+      if (error) { console.error(error); hasError = true; }
     }
+    if (hasError) return alert('저장 중 오류가 발생했습니다.');
     setSelectedDates([]);
-    fetchSchedules();
+    setIsCustom(false);
+    setCustomReason('');
+    setLeaveType('연차');
+    await fetchSchedules(userId);
   };
 
   // 수정 모달 열기
@@ -198,7 +205,7 @@ export default function LeavePage() {
                   type="text"
                   value={customReason}
                   onChange={e => { setCustomReason(e.target.value); setLeaveType(e.target.value); }}
-                  placeholder="예비군, 경조사 등"
+                  placeholder="예비군, 연차 초과인 병가 등"
                   className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-purple-400 w-40"
                 />
               )}
