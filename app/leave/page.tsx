@@ -159,7 +159,8 @@ export default function LeavePage() {
   const editFirstDay = getFirstDayOfMonth(editYear, editMonth);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-300">
+      <div className="max-w-5xl mx-auto bg-gray-50 min-h-screen p-6">
       <header className="flex justify-between items-center bg-white p-4 rounded-lg shadow mb-6">
         <h1 className="text-2xl font-bold text-blue-600">🏥 1번약국</h1>
         <button onClick={() => router.push('/')} className="text-sm text-blue-500 underline">← 메인으로</button>
@@ -393,6 +394,7 @@ export default function LeavePage() {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }
