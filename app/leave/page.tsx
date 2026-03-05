@@ -205,8 +205,8 @@ export default function LeavePage() {
                   type="text"
                   value={customReason}
                   onChange={e => { setCustomReason(e.target.value); setLeaveType(e.target.value); }}
-                  placeholder="예비군, 연차 초과인 병가 등"
-                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-purple-400 w-40"
+                  placeholder="예비군, 경조사 등"
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-purple-400 w-56"
                 />
               )}
             </div>
