@@ -3,6 +3,21 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { useRouter } from 'next/navigation';
 
+function getKoreanHolidays(year: number): Set<string> {
+  const h: string[] = [
+    `${year}-01-01`,`${year}-03-01`,`${year}-05-05`,`${year}-06-06`,
+    `${year}-08-15`,`${year}-10-03`,`${year}-10-09`,`${year}-12-25`,
+  ];
+  const lunar: Record<number, string[]> = {
+    2024: ['2024-02-09','2024-02-10','2024-02-11','2024-05-15','2024-09-16','2024-09-17','2024-09-18'],
+    2025: ['2025-01-28','2025-01-29','2025-01-30','2025-05-05','2025-10-05','2025-10-06','2025-10-07'],
+    2026: ['2026-02-17','2026-02-18','2026-02-19','2026-05-24','2026-09-24','2026-09-25','2026-09-26'],
+    2027: ['2027-02-06','2027-02-07','2027-02-08','2027-05-13','2027-09-14','2027-09-15','2027-09-16'],
+  };
+  if (lunar[year]) h.push(...lunar[year]);
+  return new Set(h);
+}
+
 export default function LeavePage() {
   const [schedules, setSchedules] = useState<any[]>([]);
   const [userId, setUserId] = useState('');
@@ -231,13 +246,15 @@ export default function LeavePage() {
               const dateStr = toDateStr(currentYear, currentMonth, day);
               const isSelected = selectedDates.includes(dateStr);
               const dayOfWeek = (firstDay + i) % 7;
+              const isHoliday = getKoreanHolidays(currentYear).has(dateStr);
+              const isRed = !isSelected && (dayOfWeek === 0 || isHoliday);
               return (
                 <div key={day} onClick={() => handleDayClick(dateStr)}
                   className={`py-3 cursor-pointer text-sm mx-1 my-1 rounded-full
                     ${isSelected ? 'bg-green-500 text-white font-bold' : ''}
-                    ${!isSelected && dayOfWeek === 0 ? 'text-red-400' : ''}
-                    ${!isSelected && dayOfWeek === 6 ? 'text-blue-400' : ''}
-                    ${!isSelected && dayOfWeek !== 0 && dayOfWeek !== 6 ? 'text-gray-900' : ''}
+                    ${isRed ? 'text-red-400' : ''}
+                    ${!isSelected && !isRed && dayOfWeek === 6 ? 'text-blue-400' : ''}
+                    ${!isSelected && !isRed && dayOfWeek !== 0 && dayOfWeek !== 6 ? 'text-gray-900' : ''}
                     hover:bg-green-100`}>
                   {day}
                 </div>
@@ -347,13 +364,15 @@ export default function LeavePage() {
                   const dateStr = toDateStr(editYear, editMonth, day);
                   const isSelected = editDates.includes(dateStr);
                   const dayOfWeek = (editFirstDay + i) % 7;
+                  const isHoliday = getKoreanHolidays(editYear).has(dateStr);
+                  const isRed = !isSelected && (dayOfWeek === 0 || isHoliday);
                   return (
                     <div key={day} onClick={() => handleEditDayClick(dateStr)}
                       className={`py-2 cursor-pointer text-xs mx-0.5 my-0.5 rounded-full
                         ${isSelected ? 'bg-green-500 text-white font-bold' : ''}
-                        ${!isSelected && dayOfWeek === 0 ? 'text-red-400' : ''}
-                        ${!isSelected && dayOfWeek === 6 ? 'text-blue-400' : ''}
-                        ${!isSelected && dayOfWeek !== 0 && dayOfWeek !== 6 ? 'text-gray-900' : ''}
+                        ${isRed ? 'text-red-400' : ''}
+                        ${!isSelected && !isRed && dayOfWeek === 6 ? 'text-blue-400' : ''}
+                        ${!isSelected && !isRed && dayOfWeek !== 0 && dayOfWeek !== 6 ? 'text-gray-900' : ''}
                         hover:bg-green-100`}>
                       {day}
                     </div>
