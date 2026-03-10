@@ -57,21 +57,27 @@ export default function PharmacyHub() {
           .from('pharmacy_schedules').select('*, pharmacy_users(name)').eq('status', 'approved');
         if (scheduleData) {
           setSchedules(scheduleData);
-          const used = scheduleData.filter(s => s.user_id === userData.id && ['연차','반차'].includes(s.type)).length;
-          setUsedLeave(used);
+        }
 
-          // 연간 달력용: 내 연차 날짜 Set
+        // 내 연차만 별도 쿼리로 정확하게 조회
+        const { data: mySchedules } = await supabase
+          .from('pharmacy_schedules')
+          .select('*')
+          .eq('user_id', userData.id)
+          .eq('status', 'approved')
+          .in('type', ['연차', '반차']);
+
+        if (mySchedules) {
+          setUsedLeave(mySchedules.length);
           const usedDates = new Set<string>();
-          scheduleData
-            .filter(s => s.user_id === userData.id && ['연차','반차'].includes(s.type))
-            .forEach(s => {
-              let d = new Date(s.start_date);
-              const end = new Date(s.end_date);
-              while (d <= end) {
-                usedDates.add(d.toISOString().split('T')[0]);
-                d.setDate(d.getDate() + 1);
-              }
-            });
+          mySchedules.forEach(s => {
+            let d = new Date(s.start_date);
+            const end = new Date(s.end_date);
+            while (d <= end) {
+              usedDates.add(d.toISOString().split('T')[0]);
+              d.setDate(d.getDate() + 1);
+            }
+          });
           setMyUsedDates(usedDates);
         }
       }
@@ -92,7 +98,7 @@ export default function PharmacyHub() {
   const getSchedulesForDay = (dateStr: string) =>
     schedules.filter(s => s.start_date <= dateStr && s.end_date >= dateStr);
 
-  const typeColor: any = { 연차: 'bg-red-400', 반차: 'bg-orange-300', 근무: 'bg-blue-400' };
+  const typeColor: any = { 연차: 'bg-red-400', 반차: 'bg-orange-300', 근무: 'bg-blue-400', 예비군: 'bg-purple-400' };
 
   const remainLeave = totalLeave - usedLeave;
   const currentMonthNum = new Date().getMonth() + 1;
@@ -149,6 +155,7 @@ export default function PharmacyHub() {
           <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-400 inline-block"/>연차</span>
           <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-orange-300 inline-block"/>반차</span>
           <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-blue-400 inline-block"/>근무</span>
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-purple-400 inline-block"/>예비군</span>
         </div>
 
         <div className="space-y-8">
@@ -174,12 +181,15 @@ export default function PharmacyHub() {
                     const daySchedules = getSchedulesForDay(dateStr);
                     const dayOfWeek = (fd + i) % 7;
                     const isToday = dateStr === todayStr;
+                    const monthHolidays = getKoreanHolidays(yOffset);
+                    const isHoliday = monthHolidays.has(dateStr);
+                    const isRed = dayOfWeek === 0 || isHoliday;
 
                     return (
                       <div key={day} className={`border rounded p-1.5 min-h-32 hover:bg-blue-50 cursor-pointer
                         ${isToday ? 'border-blue-400 bg-blue-50' : ''}`}>
                         <span className={`text-base font-medium
-                          ${dayOfWeek === 0 ? 'text-red-500' : dayOfWeek === 6 ? 'text-blue-500' : 'text-gray-800'}
+                          ${isRed ? 'text-red-500' : dayOfWeek === 6 ? 'text-blue-500' : 'text-gray-800'}
                           ${isToday ? 'bg-blue-500 text-white rounded-full w-7 h-7 flex items-center justify-center mx-auto' : ''}`}>
                           {day}
                         </span>
