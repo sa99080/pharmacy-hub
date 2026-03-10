@@ -5,24 +5,40 @@ import { useRouter } from 'next/navigation';
 
 // 한국 공휴일 (연도별)
 function getKoreanHolidays(year: number): Set<string> {
-  const h: string[] = [
-    `${year}-01-01`,
-    `${year}-03-01`,
-    `${year}-05-05`,
-    `${year}-06-06`,
-    `${year}-08-15`,
-    `${year}-10-03`,
-    `${year}-10-09`,
-    `${year}-12-25`,
-  ];
-  const lunar: Record<number, string[]> = {
-    2024: ['2024-02-09','2024-02-10','2024-02-11','2024-05-15','2024-09-16','2024-09-17','2024-09-18'],
-    2025: ['2025-01-28','2025-01-29','2025-01-30','2025-05-05','2025-10-05','2025-10-06','2025-10-07'],
-    2026: ['2026-02-17','2026-02-18','2026-02-19','2026-05-24','2026-09-24','2026-09-25','2026-09-26'],
-    2027: ['2027-02-06','2027-02-07','2027-02-08','2027-05-13','2027-09-14','2027-09-15','2027-09-16'],
+  return new Set(Object.keys(getKoreanHolidayNames(year)));
+}
+
+function getKoreanHolidayNames(year: number): Record<string, string> {
+  const h: Record<string, string> = {
+    [`${year}-01-01`]: '신정',
+    [`${year}-03-01`]: '삼일절',
+    [`${year}-05-05`]: '어린이날',
+    [`${year}-06-06`]: '현충일',
+    [`${year}-08-15`]: '광복절',
+    [`${year}-10-03`]: '개천절',
+    [`${year}-10-09`]: '한글날',
+    [`${year}-12-25`]: '크리스마스',
   };
-  if (lunar[year]) h.push(...lunar[year]);
-  return new Set(h);
+  const lunar: Record<number, Record<string, string>> = {
+    2024: {
+      '2024-02-09': '설날 연휴', '2024-02-10': '설날', '2024-02-11': '설날 연휴',
+      '2024-05-15': '부처님오신날', '2024-09-16': '추석 연휴', '2024-09-17': '추석', '2024-09-18': '추석 연휴',
+    },
+    2025: {
+      '2025-01-28': '설날 연휴', '2025-01-29': '설날', '2025-01-30': '설날 연휴',
+      '2025-05-05': '부처님오신날', '2025-10-05': '추석 연휴', '2025-10-06': '추석', '2025-10-07': '추석 연휴',
+    },
+    2026: {
+      '2026-02-17': '설날 연휴', '2026-02-18': '설날', '2026-02-19': '설날 연휴',
+      '2026-05-24': '부처님오신날', '2026-09-24': '추석 연휴', '2026-09-25': '추석', '2026-09-26': '추석 연휴',
+    },
+    2027: {
+      '2027-02-06': '설날 연휴', '2027-02-07': '설날', '2027-02-08': '설날 연휴',
+      '2027-05-13': '부처님오신날', '2027-09-14': '추석 연휴', '2027-09-15': '추석', '2027-09-16': '추석 연휴',
+    },
+  };
+  if (lunar[year]) Object.assign(h, lunar[year]);
+  return h;
 }
 
 export default function PharmacyHub() {
@@ -98,7 +114,7 @@ export default function PharmacyHub() {
   const getSchedulesForDay = (dateStr: string) =>
     schedules.filter(s => s.start_date <= dateStr && s.end_date >= dateStr);
 
-  const typeColor: any = { 연차: 'bg-red-400', 반차: 'bg-orange-300', 근무: 'bg-blue-400', 예비군: 'bg-purple-400' };
+  const typeColor: any = { 연차: 'bg-red-400', 반차: 'bg-orange-300', 근무: 'bg-blue-400' };
 
   const remainLeave = totalLeave - usedLeave;
   const currentMonthNum = new Date().getMonth() + 1;
@@ -155,7 +171,7 @@ export default function PharmacyHub() {
           <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-red-400 inline-block"/>연차</span>
           <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-orange-300 inline-block"/>반차</span>
           <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-blue-400 inline-block"/>근무</span>
-          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-purple-400 inline-block"/>예비군</span>
+          <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-gray-400 inline-block"/>기타</span>
         </div>
 
         <div className="space-y-8">
@@ -182,7 +198,9 @@ export default function PharmacyHub() {
                     const dayOfWeek = (fd + i) % 7;
                     const isToday = dateStr === todayStr;
                     const monthHolidays = getKoreanHolidays(yOffset);
+                    const holidayNames = getKoreanHolidayNames(yOffset);
                     const isHoliday = monthHolidays.has(dateStr);
+                    const holidayName = holidayNames[dateStr];
                     const isRed = dayOfWeek === 0 || isHoliday;
 
                     return (
@@ -193,6 +211,9 @@ export default function PharmacyHub() {
                           ${isToday ? 'bg-blue-500 text-white rounded-full w-7 h-7 flex items-center justify-center mx-auto' : ''}`}>
                           {day}
                         </span>
+                        {holidayName && (
+                          <div className="text-xs text-red-400 truncate mt-0.5">{holidayName}</div>
+                        )}
                         <div className="mt-1 space-y-0.5">
                           {daySchedules.slice(0, 3).map(s => (
                             <div key={s.id} className={`text-sm text-white rounded px-1 truncate ${typeColor[s.type] || 'bg-gray-400'}`}>
