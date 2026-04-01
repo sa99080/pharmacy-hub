@@ -127,91 +127,120 @@ export default function PublicCalendarPage() {
                     ))}
                   </div>
 
-                  {/* 날짜 그리드 */}
-                  <div className="grid grid-cols-7 gap-px bg-gray-200 rounded-lg overflow-hidden border border-gray-200">
-                    {Array.from({ length: fd }).map((_, i) => (
-                      <div key={`e-${i}`} className="bg-white min-h-14" />
-                    ))}
-                    {Array.from({ length: dim }).map((_, i) => {
-                      const day = i + 1;
-                      const dateStr = toDateStr(yOffset, mOffset, day);
-                      const daySchedules = getSchedulesForDay(dateStr);
-                      const dayOfWeek = (fd + i) % 7;
-                      const isToday = dateStr === todayStr;
-                      const holidayName = holidayNamesMonth[dateStr];
-                      const isRed = dayOfWeek === 0 || !!holidayName;
-                      const isSelected = selectedDate === dateStr;
+                  {/* 날짜 그리드 - 주 단위로 렌더링 */}
+                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+                    {(() => {
+                      const totalCells = fd + dim;
+                      const weeks = Math.ceil(totalCells / 7);
+                      return Array.from({ length: weeks }).map((_, weekIdx) => {
+                        const weekDays = Array.from({ length: 7 }).map((_, d) => {
+                          const cellIdx = weekIdx * 7 + d;
+                          const day = cellIdx - fd + 1;
+                          return { day, cellIdx };
+                        });
+                        // 이 주에 선택된 날짜가 있는지
+                        const selectedInWeek = weekDays.some(({ day }) => {
+                          if (day < 1 || day > dim) return false;
+                          return toDateStr(yOffset, mOffset, day) === selectedDate;
+                        });
 
-                      return (
-                        <div
-                          key={day}
-                          onClick={() => setSelectedDate(isSelected ? null : dateStr)}
-                          className={`bg-white min-h-14 p-1 cursor-pointer transition-colors
-                            ${isSelected ? 'bg-blue-50 ring-2 ring-inset ring-blue-400' : 'hover:bg-gray-50'}`}
-                        >
-                          <div className="flex justify-center mb-0.5">
-                            <span className={`text-sm font-semibold w-6 h-6 flex items-center justify-center rounded-full
-                              ${isToday ? 'bg-blue-500 text-white' :
-                                isRed ? 'text-red-500' :
-                                dayOfWeek === 6 ? 'text-blue-500' : 'text-gray-800'}`}>
-                              {day}
-                            </span>
-                          </div>
-                          {holidayName && (
-                            <div className="text-center text-red-400 leading-tight mb-0.5" style={{fontSize:'8px'}}>
-                              {holidayName}
-                            </div>
-                          )}
-                          {daySchedules.length > 0 && (
-                            <div className="flex flex-wrap justify-center gap-0.5">
-                              {daySchedules.slice(0, 5).map((s, idx) => {
-                                const c = typeColor[s.type];
-                                return <span key={idx} className={`w-1.5 h-1.5 rounded-full ${c ? c.dot : 'bg-gray-400'}`} />;
+                        return (
+                          <div key={weekIdx}>
+                            {/* 주 행 */}
+                            <div className="grid grid-cols-7 gap-px bg-gray-200">
+                              {weekDays.map(({ day, cellIdx }) => {
+                                if (day < 1 || day > dim) {
+                                  return <div key={cellIdx} className="bg-white min-h-14" />;
+                                }
+                                const dateStr = toDateStr(yOffset, mOffset, day);
+                                const daySchedules = getSchedulesForDay(dateStr);
+                                const dayOfWeek = cellIdx % 7;
+                                const isToday = dateStr === todayStr;
+                                const holidayName = holidayNamesMonth[dateStr];
+                                const isRed = dayOfWeek === 0 || !!holidayName;
+                                const isSelected = selectedDate === dateStr;
+
+                                return (
+                                  <div
+                                    key={cellIdx}
+                                    onClick={() => setSelectedDate(isSelected ? null : dateStr)}
+                                    className={`bg-white min-h-14 p-1 cursor-pointer transition-colors
+                                      ${isSelected ? 'bg-blue-50 ring-2 ring-inset ring-blue-400' : 'hover:bg-gray-50'}`}
+                                  >
+                                    <div className="flex justify-center mb-0.5">
+                                      <span className={`text-sm font-semibold w-6 h-6 flex items-center justify-center rounded-full
+                                        ${isToday ? 'bg-blue-500 text-white' :
+                                          isRed ? 'text-red-500' :
+                                          dayOfWeek === 6 ? 'text-blue-500' : 'text-gray-800'}`}>
+                                        {day}
+                                      </span>
+                                    </div>
+                                    {holidayName && (
+                                      <div className="text-center text-red-400 leading-tight mb-0.5" style={{fontSize:'8px'}}>
+                                        {holidayName}
+                                      </div>
+                                    )}
+                                    {daySchedules.length > 0 && (
+                                      <div className="flex flex-wrap justify-center gap-0.5">
+                                        {daySchedules.slice(0, 5).map((s, idx) => {
+                                          const c = typeColor[s.type];
+                                          return <span key={idx} className={`w-1.5 h-1.5 rounded-full ${c ? c.dot : 'bg-gray-400'}`} />;
+                                        })}
+                                        {daySchedules.length > 5 && (
+                                          <span className="text-gray-400" style={{fontSize:'8px'}}>+{daySchedules.length-5}</span>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
                               })}
-                              {daySchedules.length > 5 && (
-                                <span className="text-gray-400" style={{fontSize:'8px'}}>+{daySchedules.length-5}</span>
-                              )}
                             </div>
-                          )}
-                        </div>
-                      );
-                    })}
+
+                            {/* 선택된 날짜가 이 주에 있으면 바로 아래 팝업 */}
+                            {selectedInWeek && selectedDate && (() => {
+                              const daySchedules = getSchedulesForDay(selectedDate);
+                              return (
+                                <div className="bg-blue-50 border-t border-b border-blue-200 px-3 py-2">
+                                  <div className="flex items-center justify-between mb-1.5">
+                                    <span className="text-xs font-bold text-blue-700">
+                                      {selectedDate.replace(/-/g, '.')} 일정
+                                    </span>
+                                    <button
+                                      onClick={() => setSelectedDate(null)}
+                                      className="text-xs text-gray-400 hover:text-gray-600"
+                                    >✕</button>
+                                  </div>
+                                  {daySchedules.length === 0 ? (
+                                    <p className="text-xs text-gray-400 py-1">등록된 일정이 없습니다</p>
+                                  ) : (
+                                    <div className="space-y-1">
+                                      {daySchedules.map(s => {
+                                        const c = typeColor[s.type];
+                                        return (
+                                          <div key={s.id} className={`flex items-center gap-2 px-2 py-1.5 rounded-lg ${c ? c.bg : 'bg-gray-100'}`}>
+                                            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${c ? c.dot : 'bg-gray-400'}`} />
+                                            <span className={`text-sm font-semibold ${c ? c.text : 'text-gray-700'}`}>
+                                              {s.pharmacy_users?.name}
+                                            </span>
+                                            <span className={`text-xs ml-auto px-2 py-0.5 rounded-full font-medium ${c ? c.bg+' '+c.text : 'bg-gray-100 text-gray-500'}`}>
+                                              {s.type}
+                                            </span>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        );
+                      });
+                    })()}
                   </div>
                 </div>
               );
             })}
-
-            {/* 선택된 날짜 상세 */}
-            {selectedDate && (
-              <div className="rounded-xl border border-gray-200 overflow-hidden">
-                <div className="bg-gray-50 px-4 py-2.5 border-b border-gray-200 flex items-center justify-between">
-                  <span className="font-bold text-gray-700 text-sm">
-                    {selectedDate.replace(/-/g, '.')} 일정
-                  </span>
-                  <span className="text-xs text-gray-400">{selectedDate ? getSchedulesForDay(selectedDate).length : 0}건</span>
-                </div>
-                {getSchedulesForDay(selectedDate).length === 0 ? (
-                  <div className="px-4 py-5 text-sm text-gray-400 text-center">등록된 일정이 없습니다</div>
-                ) : (
-                  <div className="divide-y divide-gray-100">
-                    {getSchedulesForDay(selectedDate).map(s => {
-                      const c = typeColor[s.type];
-                      return (
-                        <div key={s.id} className={`flex items-center gap-3 px-4 py-3 ${c ? c.bg : 'bg-gray-50'}`}>
-                          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${c ? c.dot : 'bg-gray-400'}`} />
-                          <span className={`font-semibold text-sm ${c ? c.text : 'text-gray-700'}`}>
-                            {s.pharmacy_users?.name}
-                          </span>
-                          <span className={`text-xs ml-auto px-2 py-0.5 rounded-full font-medium ${c ? c.bg+' '+c.text : 'bg-gray-100 text-gray-500'}`}>
-                            {s.type}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         )}
       </div>
